@@ -48,37 +48,13 @@ EXPORT_SYMBOL(zero_page_mask);
 
 static void __init setup_zero_pages(void)
 {
-	struct cpuid cpu_id;
 	unsigned int order;
 	struct page *page;
 	int i;
 
-	get_cpu_id(&cpu_id);
-	switch (cpu_id.machine) {
-	case 0x9672:	/* g5 */
-	case 0x2064:	/* z900 */
-	case 0x2066:	/* z900 */
-	case 0x2084:	/* z990 */
-	case 0x2086:	/* z990 */
-	case 0x2094:	/* z9-109 */
-	case 0x2096:	/* z9-109 */
-		order = 0;
-		break;
-	case 0x2097:	/* z10 */
-	case 0x2098:	/* z10 */
-	case 0x2817:	/* z196 */
-	case 0x2818:	/* z196 */
-		order = 2;
-		break;
-	case 0x2827:	/* zEC12 */
-	case 0x2828:	/* zEC12 */
-		order = 5;
-		break;
-	case 0x2964:	/* z13 */
-	default:
-		order = 7;
-		break;
-	}
+	/* Latest machines require a mapping granularity of 512KB */
+	order = 7;
+
 	/* Limit number of empty zero pages for small memory sizes */
 	while (order > 2 && (totalram_pages >> 10) < (1UL << order))
 		order--;
@@ -169,7 +145,7 @@ void __init free_initrd_mem(unsigned long start, unsigned long end)
 #endif
 
 #ifdef CONFIG_MEMORY_HOTPLUG
-int arch_add_memory(int nid, u64 start, u64 size)
+int arch_add_memory(int nid, u64 start, u64 size, bool for_device)
 {
 	unsigned long normal_end_pfn = PFN_DOWN(memblock_end_of_DRAM());
 	unsigned long dma_end_pfn = PFN_DOWN(MAX_DMA_ADDRESS);
